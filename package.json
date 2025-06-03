@@ -10,7 +10,9 @@
   },
   "dependencies": {
     "@creit.tech/stellar-wallets-kit": "^1.7.3",
+    "@stellar/stellar-sdk": "^12.3.0",
     "@tanstack/react-query": "^5.80.1",
+    "buffer": "^6.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.16.0",

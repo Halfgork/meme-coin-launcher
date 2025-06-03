@@ -5,10 +5,15 @@ import { useState } from 'react'
 import { ArrowLeft, Rocket, Sparkles, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 import { useWalletStore } from '../../src/stores/walletStore'
+import { TokenTestForm } from '../../src/components/create/TokenTestForm'
+import { TokenCreationForm } from '../../src/components/create/TokenCreationForm'
+import { TokenPreview } from '../../src/components/create/TokenPreview'
+import { TokenDeployment } from '../../src/components/create/TokenDeployment'
 
 export default function CreatePage() {
   const { connection } = useWalletStore()
   const [step, setStep] = useState(1) // 1: Form, 2: Preview, 3: Deploy
+  const [isDeploying, setIsDeploying] = useState(false)
 
   const [formData, setFormData] = useState({
     name: '',
@@ -20,6 +25,35 @@ export default function CreatePage() {
     tags: [] as string[],
     templateId: ''
   })
+
+  const handleFormSubmit = (data: any) => {
+    setFormData(data)
+    setStep(2) // Move to preview
+  }
+
+  const handleEdit = () => {
+    setStep(1) // Back to form
+  }
+
+  const handleDeploy = async () => {
+    setIsDeploying(true)
+    setStep(3) // Move to deploy
+  }
+
+  const handleStartOver = () => {
+    setStep(1)
+    setIsDeploying(false)
+    setFormData({
+      name: '',
+      symbol: '',
+      description: '',
+      initialSupply: 1000000,
+      decimals: 7,
+      image: '',
+      tags: [] as string[],
+      templateId: ''
+    })
+  }
 
   if (!connection.connected) {
     return (
@@ -89,45 +123,37 @@ export default function CreatePage() {
           </p>
         </motion.div>
 
-        {/* Step Indicator */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="flex justify-center mb-12"
-        >
-          <div className="flex items-center space-x-4">
-            {[1, 2, 3].map((stepNum) => (
-              <div key={stepNum} className="flex items-center">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
-                  step >= stepNum 
-                    ? 'bg-gradient-to-r from-primary to-secondary text-white' 
-                    : 'bg-gray-800 text-gray-400'
-                }`}>
-                  {stepNum}
+        {/* Connected - Show creation interface */}
+        <div className="max-w-4xl mx-auto">
+          {/* Step Indicator */}
+          <div className="mb-8">
+            <div className="flex items-center justify-center space-x-8">
+              {[1, 2, 3].map((stepNum) => (
+                <div key={stepNum} className="flex items-center">
+                  <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 font-semibold ${
+                    step === stepNum 
+                      ? 'bg-primary border-primary text-white' 
+                      : step > stepNum 
+                      ? 'bg-success border-success text-white'
+                      : 'border-gray-600 text-gray-400'
+                  }`}>
+                    {step > stepNum ? '✓' : stepNum}
+                  </div>
+                  <span className={`ml-3 font-medium ${
+                    step === stepNum ? 'text-primary' : step > stepNum ? 'text-success' : 'text-gray-400'
+                  }`}>
+                    {stepNum === 1 ? 'Create' : stepNum === 2 ? 'Preview' : 'Deploy'}
+                  </span>
+                  {stepNum < 3 && (
+                    <div className={`w-16 h-0.5 ml-8 ${
+                      step > stepNum ? 'bg-success' : 'bg-gray-600'
+                    }`} />
+                  )}
                 </div>
-                <span className={`ml-2 transition-colors ${
-                  step >= stepNum ? 'text-white' : 'text-gray-400'
-                }`}>
-                  {stepNum === 1 ? 'Details' : stepNum === 2 ? 'Preview' : 'Deploy'}
-                </span>
-                {stepNum < 3 && (
-                  <div className={`w-12 h-0.5 mx-4 transition-colors ${
-                    step > stepNum ? 'bg-primary' : 'bg-gray-800'
-                  }`} />
-                )}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </motion.div>
 
-        {/* Content Area */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="max-w-4xl mx-auto"
-        >
           {step === 1 && (
             <div className="bg-black/50 border border-white/20 rounded-2xl p-8">
               <h2 className="text-2xl font-bold mb-6 flex items-center">
@@ -135,33 +161,32 @@ export default function CreatePage() {
                 Token Details
               </h2>
               
-              {/* Form will go here */}
-              <div className="text-center py-12 text-gray-400">
-                <Rocket className="h-16 w-16 mx-auto mb-4 text-primary" />
-                <p>Token creation form coming soon...</p>
-                <p className="text-sm mt-2">Contract integration in progress 🚧</p>
-              </div>
+              <TokenCreationForm onSubmit={handleFormSubmit} />
             </div>
           )}
 
           {step === 2 && (
             <div className="bg-black/50 border border-white/20 rounded-2xl p-8">
               <h2 className="text-2xl font-bold mb-6">Preview Your Token</h2>
-              <div className="text-center py-12 text-gray-400">
-                Preview component coming soon...
-              </div>
+              <TokenPreview 
+                formData={formData} 
+                onEdit={handleEdit}
+                onDeploy={handleDeploy}
+                isLoading={isDeploying}
+              />
             </div>
           )}
 
           {step === 3 && (
             <div className="bg-black/50 border border-white/20 rounded-2xl p-8">
               <h2 className="text-2xl font-bold mb-6">Deploy to Stellar</h2>
-              <div className="text-center py-12 text-gray-400">
-                Deployment interface coming soon...
-              </div>
+              <TokenDeployment 
+                formData={formData}
+                onStartOver={handleStartOver}
+              />
             </div>
           )}
-        </motion.div>
+        </div>
       </div>
     </div>
   )
