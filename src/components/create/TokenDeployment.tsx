@@ -12,6 +12,8 @@ import {
   ArrowLeft,
   AlertTriangle
 } from 'lucide-react'
+import { useMemeStore } from '../../stores/memeStore'
+import { useWalletStore } from '../../stores/walletStore'
 
 interface TokenFormData {
   name: string
@@ -39,6 +41,22 @@ interface TokenDeploymentProps {
 }
 
 export function TokenDeployment({ formData, onStartOver }: TokenDeploymentProps) {
+  const { addUserCreatedToken } = useMemeStore()
+  const { connection } = useWalletStore()
+  
+  const [hasAddedToken, setHasAddedToken] = useState(false)
+
+  const getTemplateEmoji = (templateId: string): string => {
+    const templates: Record<string, string> = {
+      'doge': '🐕',
+      'pepe': '🐸',
+      'chad': '💪',
+      'stonks': '📈',
+      'custom': '🎨'
+    }
+    return templates[templateId] || '🚀'
+  }
+  
   const [deploymentSteps, setDeploymentSteps] = useState<DeploymentStep[]>([
     {
       id: 'validation',
@@ -78,9 +96,11 @@ export function TokenDeployment({ formData, onStartOver }: TokenDeploymentProps)
   const [contractAddress, setContractAddress] = useState('')
 
   useEffect(() => {
-    // Start deployment process
-    startDeployment()
-  }, [])
+    // Start deployment process only once
+    if (!hasAddedToken) {
+      startDeployment()
+    }
+  }, [hasAddedToken])
 
   const updateStepStatus = (stepId: string, status: DeploymentStep['status'], errorMessage?: string, transactionHash?: string) => {
     setDeploymentSteps(prev => prev.map(step => 
@@ -140,6 +160,22 @@ export function TokenDeployment({ formData, onStartOver }: TokenDeploymentProps)
       // Set mock contract address
       setContractAddress('CDC5RY5NHDYL4KCRP2OPAU6XL3GNR4L3P3R2PJTPV4PVUJBAFAUMVDN7')
       setDeploymentComplete(true)
+
+      // Add token to store (only once)
+      if (!hasAddedToken) {
+        addUserCreatedToken({
+          ...formData,
+          image: getTemplateEmoji(formData.templateId),
+          creator: connection.address || 'Unknown',
+          contractAddress: contractAddress,
+          price: 0.000001,
+          priceChange24h: 0,
+          marketCap: formData.initialSupply * 0.000001,
+          volume24h: 0,
+          holders: 1
+        })
+        setHasAddedToken(true)
+      }
 
     } catch (error: any) {
       setDeploymentError(error.message)

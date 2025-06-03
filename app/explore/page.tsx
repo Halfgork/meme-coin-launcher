@@ -2,63 +2,79 @@
 
 import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
-import { Search, Filter, TrendingUp, Clock, Users, Zap } from 'lucide-react'
-import { TrendingBoard } from '../../src/components/meme/TrendingBoard'
-import { CoinCard } from '../../src/components/meme/CoinCard'
+import { Search, Filter, TrendingUp, Clock, Flame } from 'lucide-react'
+import { TokenCard } from '../../src/components/ui/TokenCard'
 import { useMemeStore } from '../../src/stores/memeStore'
 
 export default function ExplorePage() {
-  const { coins, fetchCoins, searchCoins, isLoading } = useMemeStore()
-  const [searchQuery, setSearchQuery] = useState('')
-  const [filteredCoins, setFilteredCoins] = useState(coins)
-  const [sortBy, setSortBy] = useState('viral') // viral, newest, holders
+  const { 
+    tokens, 
+    trendingTokens, 
+    newestTokens, 
+    searchQuery, 
+    selectedCategory,
+    setSearchQuery,
+    setSelectedCategory,
+    getFilteredTokens,
+    clearDuplicates
+  } = useMemeStore()
+  
+  const [activeTab, setActiveTab] = useState('newest')
+  const [localSearchQuery, setLocalSearchQuery] = useState('')
 
   useEffect(() => {
-    fetchCoins()
-  }, [fetchCoins])
+    setSearchQuery(localSearchQuery)
+  }, [localSearchQuery, setSearchQuery])
 
-  useEffect(() => {
-    let result = searchQuery ? searchCoins(searchQuery) : coins
-    
-    // Sort results
-    switch (sortBy) {
-      case 'viral':
-        result = [...result].sort((a, b) => b.viralScore - a.viralScore)
-        break
+  const getDisplayTokens = () => {
+    switch (activeTab) {
+      case 'trending':
+        return trendingTokens
       case 'newest':
-        result = [...result].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        break
-      case 'holders':
-        result = [...result].sort((a, b) => b.holders - a.holders)
-        break
+        return newestTokens.slice().sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      case 'all':
+        return getFilteredTokens()
+      default:
+        return newestTokens
     }
-    
-    setFilteredCoins(result)
-  }, [searchQuery, coins, sortBy, searchCoins])
+  }
 
-  const sortOptions = [
-    { value: 'viral', label: 'Viral Score', icon: Zap },
-    { value: 'newest', label: 'Newest', icon: Clock },
-    { value: 'holders', label: 'Most Holders', icon: Users },
+  const displayTokens = getDisplayTokens()
+
+  const categories = [
+    { id: 'all', name: 'All', icon: '🚀' },
+    { id: 'doge', name: 'Doge', icon: '🐕' },
+    { id: 'pepe', name: 'Pepe', icon: '🐸' },
+    { id: 'chad', name: 'Chad', icon: '💪' },
+    { id: 'stonks', name: 'Stonks', icon: '📈' },
+    { id: 'custom', name: 'Custom', icon: '🎨' }
   ]
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="container mx-auto px-4 py-6 relative z-10">
+      <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8"
+          className="text-center mb-12"
         >
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Explore Meme Coins
+              Explore Meme Tokens
             </span>
           </h1>
           <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-            Discover the hottest meme coins, track viral trends, and find your next moonshot! 🚀
+            Discover the hottest meme tokens on Stellar blockchain! 🔥
           </p>
+          
+          {/* Debug: Clear Duplicates Button */}
+          <button
+            onClick={clearDuplicates}
+            className="mt-4 bg-red-500/20 border border-red-500/40 text-red-400 text-xs px-3 py-1 rounded-lg hover:bg-red-500/30 transition-all"
+          >
+            🧹 Clear Duplicates (Debug)
+          </button>
         </motion.div>
 
         {/* Search and Filters */}
@@ -66,134 +82,148 @@ export default function ExplorePage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="flex flex-col md:flex-row gap-4 mb-6"
+          className="max-w-4xl mx-auto mb-8"
         >
-          {/* Search */}
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+          {/* Search Bar */}
+          <div className="relative mb-6">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
             <input
               type="text"
-              placeholder="Search coins by name, symbol, or description..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-gradient-card border border-white/10 rounded-xl text-white placeholder-gray-400 focus:border-primary/40 focus:outline-none transition-all"
+              value={localSearchQuery}
+              onChange={(e) => setLocalSearchQuery(e.target.value)}
+              placeholder="Search tokens by name, symbol, or tags..."
+              className="w-full pl-12 pr-4 py-4 bg-black/50 border border-white/20 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
             />
           </div>
 
-          {/* Sort Options */}
-          <div className="flex gap-2">
-            {sortOptions.map((option) => (
+          {/* Category Filters */}
+          <div className="flex flex-wrap gap-3 justify-center">
+            {categories.map((category) => (
               <motion.button
-                key={option.value}
+                key={category.id}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => setSortBy(option.value)}
-                className={`flex items-center space-x-2 px-4 py-3 rounded-xl border transition-all ${
-                  sortBy === option.value
+                onClick={() => setSelectedCategory(category.id)}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl border transition-all ${
+                  selectedCategory === category.id
                     ? 'bg-primary border-primary text-white'
-                    : 'bg-gradient-card border-white/10 text-gray-300 hover:border-primary/40'
+                    : 'bg-black/30 border-white/20 text-gray-400 hover:border-white/40'
                 }`}
               >
-                <option.icon className="h-4 w-4" />
-                <span className="hidden sm:inline">{option.label}</span>
+                <span>{category.icon}</span>
+                <span className="font-medium">{category.name}</span>
               </motion.button>
             ))}
           </div>
         </motion.div>
 
-        {/* Trending Section */}
+        {/* Tabs */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="mb-8"
+          className="flex justify-center mb-8"
         >
-          <TrendingBoard />
+          <div className="flex bg-black/50 border border-white/20 rounded-2xl p-1">
+            {[
+              { id: 'newest', name: 'Newest', icon: Clock },
+              { id: 'trending', name: 'Trending', icon: TrendingUp },
+              { id: 'all', name: 'All Tokens', icon: Flame }
+            ].map((tab) => (
+              <motion.button
+                key={tab.id}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center space-x-2 px-6 py-3 rounded-xl font-medium transition-all ${
+                  activeTab === tab.id
+                    ? 'bg-primary text-white'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                <tab.icon className="h-4 w-4" />
+                <span>{tab.name}</span>
+              </motion.button>
+            ))}
+          </div>
         </motion.div>
 
-        {/* All Coins Grid */}
+        {/* Token Grid */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
+          className="max-w-7xl mx-auto"
         >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-white">
-              All Coins ({filteredCoins.length})
-            </h2>
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="text-sm text-gray-400 hover:text-white transition-colors"
-              >
-                Clear search
-              </button>
-            )}
-          </div>
-
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="animate-pulse">
-                  <div className="bg-gradient-card border border-white/10 rounded-2xl p-6 h-96">
-                    <div className="h-4 bg-white/10 rounded mb-4"></div>
-                    <div className="aspect-square bg-white/10 rounded-xl mb-4"></div>
-                    <div className="space-y-2">
-                      <div className="h-6 bg-white/10 rounded"></div>
-                      <div className="h-4 bg-white/10 rounded w-2/3"></div>
-                      <div className="h-16 bg-white/10 rounded"></div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : filteredCoins.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredCoins.map((coin, index) => (
-                <CoinCard key={coin.id} coin={coin} index={index} />
+          {displayTokens.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {displayTokens.map((token, index) => (
+                <motion.div
+                  key={token.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <TokenCard
+                    token={token}
+                    index={index}
+                  />
+                </motion.div>
               ))}
             </div>
           ) : (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-center py-12"
+              className="text-center py-20"
             >
-              <div className="text-6xl mb-4">🔍</div>
-              <h3 className="text-xl font-bold text-white mb-2">
-                {searchQuery ? 'No coins found' : 'No coins available'}
-              </h3>
-              <p className="text-gray-400 mb-6">
-                {searchQuery 
-                  ? `Try adjusting your search terms or explore trending coins above.`
-                  : 'Be the first to create a meme coin!'
-                }
-              </p>
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="bg-gradient-button hover:opacity-90 rounded-xl px-6 py-3 font-medium transition-all"
+              <div className="max-w-md mx-auto">
+                <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
+                  <Search className="h-10 w-10 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold mb-4">No tokens found</h3>
+                <p className="text-gray-400 mb-8">
+                  {localSearchQuery 
+                    ? `No tokens match "${localSearchQuery}". Try a different search term.`
+                    : 'No tokens available in this category yet.'
+                  }
+                </p>
+                <button 
+                  onClick={() => {
+                    setLocalSearchQuery('')
+                    setSelectedCategory('all')
+                  }}
+                  className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white font-bold py-3 px-8 rounded-xl transition-all"
                 >
-                  Clear Search
+                  Clear Filters
                 </button>
-              )}
+              </div>
             </motion.div>
           )}
         </motion.div>
 
-        {/* Load More (Future implementation) */}
-        {filteredCoins.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="text-center mt-12 pb-12"
-          >
-            <button className="bg-black border-2 border-white/20 hover:border-primary/40 rounded-xl px-8 py-3 font-medium transition-all">
-              Load More Coins
-            </button>
-          </motion.div>
-        )}
+        {/* Stats */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="mt-16 max-w-4xl mx-auto"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-black/50 border border-white/20 rounded-2xl p-6 text-center">
+              <h3 className="text-3xl font-bold text-primary mb-2">{tokens.length}</h3>
+              <p className="text-gray-400">Total Tokens</p>
+            </div>
+            <div className="bg-black/50 border border-white/20 rounded-2xl p-6 text-center">
+              <h3 className="text-3xl font-bold text-success mb-2">{tokens.filter(t => t.isUserCreated).length}</h3>
+              <p className="text-gray-400">User Created</p>
+            </div>
+            <div className="bg-black/50 border border-white/20 rounded-2xl p-6 text-center">
+              <h3 className="text-3xl font-bold text-accent mb-2">{newestTokens.length}</h3>
+              <p className="text-gray-400">New This Week</p>
+            </div>
+          </div>
+        </motion.div>
       </div>
     </div>
   )
