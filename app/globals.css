@@ -24,3 +24,85 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Stellar Wallets Kit Custom Styles */
+.swk-modal {
+  font-family: inherit !important;
+}
+
+.swk-modal .swk-modal-content {
+  background: rgba(0, 0, 0, 0.95) !important;
+  border: 1px solid rgba(255, 107, 53, 0.2) !important;
+  border-radius: 16px !important;
+  backdrop-filter: blur(20px) !important;
+}
+
+.swk-modal .swk-modal-header {
+  background: transparent !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+}
+
+.swk-modal .swk-modal-title {
+  color: white !important;
+  font-weight: bold !important;
+}
+
+.swk-modal .swk-wallet-option {
+  background: rgba(255, 107, 53, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 12px !important;
+  transition: all 0.3s ease !important;
+}
+
+.swk-modal .swk-wallet-option:hover {
+  background: rgba(255, 107, 53, 0.2) !important;
+  border-color: rgba(255, 107, 53, 0.4) !important;
+  transform: translateY(-2px) !important;
+}
+
+.swk-modal .swk-wallet-name {
+  color: white !important;
+  font-weight: 500 !important;
+}
+
+.swk-modal .swk-wallet-description {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.swk-modal .swk-close-button {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.swk-modal .swk-close-button:hover {
+  color: white !important;
+}
+
+/* Custom scrollbar for modal */
+.swk-modal .swk-modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.swk-modal .swk-modal-body::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.swk-modal .swk-modal-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 107, 53, 0.5);
+  border-radius: 3px;
+}
+
+.swk-modal .swk-modal-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 107, 53, 0.7);
+}
+
+/* Line clamp utility */
+@layer utilities {
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+}
